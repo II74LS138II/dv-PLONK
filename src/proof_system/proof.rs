@@ -444,27 +444,23 @@ pub(crate) mod alloc {
             //
             // Note that we negate this value to be able to subtract
             // the pairings later on, using the multi Miller loop
-            let left = G1Affine::from(
-                -(self.w_z_chall_comm.0 + scalarmuls[V_MAX_DEGREE + 1]),
-            );
+            // 【dvKZG 改造】：用极简的标量乘法替换笨重的双线性配对
 
-            // Compute the G_1 element of the second pairing:
-            // z * [W_z]_1 + (u * z * w) * [W_zw]_1 + [F]_1 - [E]_1
-            let right = G1Affine::from(
+            // 1. 获取商多项式聚合承诺的负数 (-Q_batch)
+            let left_proj =
+                -(self.w_z_chall_comm.0 + scalarmuls[V_MAX_DEGREE + 1]);
+
+            // 2. 获取右侧组合：C_batch - y_batch*G + z*Q_batch
+            let right_proj =
                 scalarmuls[V_MAX_DEGREE + 2] + scalarmuls[V_MAX_DEGREE + 3] + F
-                    - E,
-            );
+                    - E;
 
-            // Compute the two pairings and subtract them
-            let pairing = dusk_bls12_381::multi_miller_loop(&[
-                (&left, &opening_key.prepared_x_h),
-                (&right, &opening_key.prepared_h),
-            ])
-            .final_exponentiation();
+            // 3. dvKZG 验证方程: tau * left_proj + right_proj == 0
+            // 因为 left_proj 是负的，所以这等价于 tau * Q_batch == right_proj
+            let expected_zero = (left_proj * opening_key.tau) + right_proj;
 
-            // Return 'ProofVerificationError' if the two
-            // pairings are not equal, continue otherwise
-            if pairing != dusk_bls12_381::Gt::identity() {
+            // 4. 如果不为零(Identity)，则证明伪造
+            if expected_zero != G1Projective::identity() {
                 return Err(Error::ProofVerificationError);
             };
 

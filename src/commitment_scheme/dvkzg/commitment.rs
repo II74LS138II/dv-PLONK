@@ -1,33 +1,14 @@
-// This Source Code Form is subject to the terms of the Mozilla Public
-// License, v. 2.0. If a copy of the MPL was not distributed with this
-// file, You can obtain one at http://mozilla.org/MPL/2.0/.
-//
-// Copyright (c) DUSK NETWORK. All rights reserved.
+// src/commitment_scheme/dvkzg/commitment.rs
 
 //! Module containing the representation of a Commitment to a Polynomial.
 use dusk_bls12_381::{G1Affine, G1Projective};
 use dusk_bytes::{DeserializableSlice, Serializable};
 
-#[cfg(feature = "rkyv-impl")]
-use bytecheck::CheckBytes;
-#[cfg(feature = "rkyv-impl")]
-use rkyv::{
-    Archive, Deserialize, Serialize,
-    ser::{ScratchSpace, Serializer},
-};
-
-/// Holds a commitment to a polynomial in a form of a [`G1Affine`]-bls12_381
-/// point.
+/// Holds a commitment to a polynomial in a form of a [`G1Affine`]-bls12_381 point.
+/// 在 dvKZG 中，这就是 C = f(\tau)G
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
-#[cfg_attr(
-    feature = "rkyv-impl",
-    derive(Archive, Deserialize, Serialize),
-    archive(bound(serialize = "__S: Serializer + ScratchSpace")),
-    archive_attr(derive(CheckBytes))
-)]
-pub(crate) struct Commitment(
+pub struct Commitment(
     /// The commitment is a group element.
-    #[cfg_attr(feature = "rkyv-impl", omit_bounds)]
     pub(crate) G1Affine,
 );
 
@@ -59,7 +40,7 @@ impl Serializable<{ G1Affine::SIZE }> for Commitment {
 impl Commitment {
     /// Builds an identity [`Commitment`] which is equivalent to the
     /// [`G1Affine`] identity point in bls12_381.
-    fn identity() -> Commitment {
+    pub(crate) fn identity() -> Commitment {
         Commitment(G1Affine::identity())
     }
 }

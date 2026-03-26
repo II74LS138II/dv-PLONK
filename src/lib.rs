@@ -72,9 +72,9 @@ if #[cfg(feature = "alloc")] {
 #[cfg(feature = "debug")]
 pub(crate) mod debugger;
 
-mod commitment_scheme;
-mod error;
-mod fft;
-mod proof_system;
+pub mod commitment_scheme;
+pub mod error;
+pub mod fft;
+pub mod proof_system;
 
 pub mod prelude;
