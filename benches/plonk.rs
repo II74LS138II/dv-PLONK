@@ -7,6 +7,7 @@
 #![allow(clippy::many_single_char_names)]
 
 use criterion::{Criterion, black_box, criterion_group, criterion_main};
+use dusk_bytes::Serializable;
 use dusk_plonk::prelude::*;
 
 #[derive(Debug, Clone, Copy)]
@@ -99,6 +100,11 @@ fn run<const DEGREE: usize>(
         .expect("failed to verify proof");
 
     let power = (DEGREE as f64).log2() as usize;
+
+    // 【新增】：为你的学术论文采集 Proof 大小数据
+    let proof_size = proof.to_bytes().len();
+    println!("电路规模: 2^{} | Proof 大小: {} Bytes", power, proof_size);
+
     let description = format!("Prove 2^{} = {} gates", power, DEGREE);
 
     c.bench_function(description.as_str(), |b| {
@@ -116,8 +122,9 @@ fn constraint_system_benchmark(c: &mut Criterion) {
     const MAX_DEGREE: usize = 17;
 
     let label = b"dusk-network";
-    let pp = PublicParameters::setup(1 << MAX_DEGREE, &mut rand_core::OsRng)
-        .expect("failed to generate pp");
+    let pp =
+        PublicParameters::setup(1 << (MAX_DEGREE + 1), &mut rand_core::OsRng)
+            .expect("failed to generate pp");
 
     run::<{ 1 << 5 }>(c, &pp, label);
     run::<{ 1 << 6 }>(c, &pp, label);
